@@ -5,7 +5,8 @@ module FirewallCookbook
       include Chef::Mixin::ShellOut
 
       CHAIN = { in: 'INPUT', out: 'OUTPUT', pre: 'PREROUTING', post: 'POSTROUTING' }.freeze unless defined? CHAIN # , nil => "FORWARD"}
-      TARGET = { allow: 'ACCEPT', reject: 'REJECT', deny: 'DROP', masquerade: 'MASQUERADE', redirect: 'REDIRECT', log: 'LOG --log-prefix "iptables: " --log-level 7' }.freeze unless defined? TARGET
+      TARGET = { allow: 'ACCEPT', reject: 'REJECT', deny: 'DROP', masquerade: 'MASQUERADE', redirect: 'REDIRECT', log: 'LOG' }.freeze unless defined? TARGET
+      LOG_OPTIONS = '--log-prefix "iptables: " --log-level 7'.freeze unless defined? LOG_OPTIONS
 
       def build_firewall_rule(current_node, rule_resource, ipv6 = false)
         el5 = current_node['platform_family'] == 'rhel' && Gem::Dependency.new('', '~> 5.0').match?('', current_node['platform_version'])
@@ -43,6 +44,13 @@ module FirewallCookbook
         end
 
         firewall_rule << "-j #{TARGET[rule_resource.command.to_sym]} "
+        if rule_resource.target_options.nil? || rule_resource.target_options.empty?
+          if rule_resource.command.to_sym == :log
+            firewall_rule << "#{LOG_OPTIONS} "
+          end
+        else
+           firewall_rule << "#{rule_resource.target_options} "
+        end
         firewall_rule << "--to-ports #{rule_resource.redirect_port} " if rule_resource.command == :redirect
         firewall_rule.strip!
         firewall_rule

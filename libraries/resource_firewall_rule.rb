@@ -47,5 +47,8 @@ class Chef
     # do you want this rule to notify the firewall to recalculate
     # (and potentially reapply) the firewall_rule(s) it finds?
     attribute(:notify_firewall, kind_of: [TrueClass, FalseClass], default: true)
+
+    # target options
+    attribute(:target_options, kind_of: String)
   end
 end
